@@ -146,6 +146,11 @@ function setup_workers() {
         # Rejoin has to be performed although errors will be thrown. Otherwise, restarting the kubelet will cause the node unreachable for some reason
         server_exec $node "sudo ${LOGIN_TOKEN} > /dev/null 2>&1"
         echo "Worker node $node joined the cluster (again :P)."
+
+        # Increase Kubelet loglevel
+        server_exec $node "sudo sed -i 's/--v=[0-9]\+/--v=4/' /etc/default/kubelet"
+        server_exec $node "sudo systemctl daemon-reload"
+        server_exec $node "sudo systemctl restart kubelet"
     }
 
     for node in "$@"
