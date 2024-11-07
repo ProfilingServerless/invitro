@@ -63,4 +63,11 @@ def process_log_file(file_path):
 
 process_log_file(INPUT_FILE)
 
-# TODO: max concurency
+header = ['first_seen_timestamp', 'creating_sandbox_timestamp', 'created_sandbox_timestamp', 'watched_observed_running_timestamp', 'e2e_duration']
+
+with open('pods.csv', mode='w', newline='') as f:
+    w = csv.writer(f)
+    w.writerow(header)
+    for k, v in pods.items():
+        w.writerow([k] + v)
+
