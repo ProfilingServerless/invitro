@@ -11,7 +11,7 @@ pods = {}
 first_seen_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Receiving a new pod.* pod="default/(?P<pod_name>[^"]+)"'
 creating_sandbox_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Creating PodSandbox for pod.* pod="default/(?P<pod_name>[^"]+)"'
 created_sandbox_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Created PodSandbox for pod.* pod="default/(?P<pod_name>[^"]+)"'
-e2e_duration_pattern = r'Observed pod startup duration .* pod="default/(?P<pod_name>[^"]+)" .* podStartE2EDuration="(?<e2e_duration>\d+\.\d+)s" .* watchObservedRunningTime=".*(?P<observed_running_time>\d{2}:\d{2}:\d{2}\.\d+).*"'
+e2e_duration_pattern = r'Observed pod startup duration.* pod="default/(?P<pod_name>[^"]+)" .* podStartE2EDuration="(?<e2e_duration>\d+\.\d+)s" .* watchObservedRunningTime=".*(?P<observed_running_time>\d{2}:\d{2}:\d{2}\.\d+).*"'
 
 def put_record(pod_name, idx, v):
     if not pod_name in pods:
