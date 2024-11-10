@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+rm kubelet_util.txt containerd_util.txt
+
 KUBELET_PID=$(ps aux | grep '/usr/bin/kubelet' | grep -v grep | awk '{ print $2 }')
 CONTAINERD_PID=$(ps aux | grep containerd | grep -Ev '/containerd|tmux|sudo|grep' | awk '{ print $2 }')
 
