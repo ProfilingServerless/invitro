@@ -52,6 +52,31 @@ else
     NETWORK_SANDBOX_AVG="-99"
 fi
 
+RES=$(curl -s -G --data-urlencode 'query=histogram_quantile(0.5, sum(rate(containerd_cri_container_start_seconds_bucket[350s])) by (le))' http://$PROMETHEUS_IP:9090/api/v1/query)
+STATUS=$(echo $RES | jq -r '.status')
+if [[ "$STATUS" == "success" ]]; then
+    CONTAINER_P50=$(echo $RES | jq -r '.data.result[0].value[1]') 
+else
+    CONTAINER_P50="-99"
+fi
+
+RES=$(curl -s -G --data-urlencode 'query=histogram_quantile(0.8, sum(rate(containerd_cri_container_start_seconds_bucket[350s])) by (le))' http://$PROMETHEUS_IP:9090/api/v1/query)
+STATUS=$(echo $RES | jq -r '.status')
+if [[ "$STATUS" == "success" ]]; then
+    CONTAINER_P80=$(echo $RES | jq -r '.data.result[0].value[1]') 
+else
+    CONTAINER_P80="-99"
+fi
+
+RES=$(curl -s -G --data-urlencode 'query=rate(containerd_cri_container_start_seconds_sum[350s]) / rate(containerd_cri_container_start_seconds_count[350s])' http://$PROMETHEUS_IP:9090/api/v1/query)
+STATUS=$(echo $RES | jq -r '.status')
+if [[ "$STATUS" == "success" ]]; then
+    CONTAINER_AVG=$(echo $RES | jq -r '.data.result[0].value[1]') 
+else
+    CONTAINER_AVG="-99"
+fi
+
 echo "timestamp: $TIMESTAMP"
 echo "sandbox: p50. $SANDBOX_P50 p80. $SANDBOX_P80 avg. $SANDBOX_AVG"
 echo "network sandbox: p50. $NETWORK_SANDBOX_P50 p80. $NETWORK_SANDBOX_P80 avg. $NETWORK_SANDBOX_AVG"
+echo "container start: p50. $CONTAINER_P50 p80. $CONTAINER_P80 avg. $CONTAINER_AVG"
