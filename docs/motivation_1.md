@@ -3,3 +3,5 @@ Here are the requirments to run the motivation 1 experiment.
 - Put invocation seqences of each experiment at `~/traces` 
 - Create results folders of each epxeriment at `~/results`
 - Run `cd ~/loader && ./run_motivation_1.sh` 
+## Plotting
+Run `python3 ~/loader/plotter/motivation_1/plot.py`
