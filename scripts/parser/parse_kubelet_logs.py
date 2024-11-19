@@ -15,9 +15,9 @@ created_sandbox_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Created PodS
 e2e_duration_pattern = r'Observed pod startup duration.* pod="default/(?P<pod_name>[^"]+)" .* podStartE2EDuration="(?P<e2e_duration>\d+\.\d+)s" .* watchObservedRunningTime=".*(?P<observed_running_time>\d{2}:\d{2}:\d{2}\.\d+).*"'
 creating_container_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Creating container in pod.* pod="default/(?P<pod_name>[^"]+)"'
 created_container_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Created container in pod.* pod="default/(?P<pod_name>[^"]+)"'
-network_sandbox_pattern = r'Network sandbox created in (?P<duration>\d+\.\d+)ms.*podsandboxname=(?P<pod_name>[^_]+)'
+network_sandbox_pattern = r'Network sandbox created in (?P<duration>\d+\.\d+)ms.*(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+).*podsandboxname=(?P<pod_name>[^_]+)'
  
-
+Network sandbox created in 334.469836ms. from 2024-11-19 10:22:20.42684018
 
 POD_SCHEM =  ['first_seen_timestamp',
               'creating_sandbox_timestamp',
@@ -28,12 +28,13 @@ POD_SCHEM =  ['first_seen_timestamp',
               'created_queue_timestamp',
               'created_workload_timestamp',
               'creating_workload_timestamp',
-              'network_sandbox_duration']
+              'network_sandbox_duration',
+              'network_sandbox_timestamp']
 
 
 def put_record(pod_name, idx, v):
     if not pod_name in pods:
-        pods[pod_name] = [None, None, None, None, None, None, None, None, None, None]
+        pods[pod_name] = [None, None, None, None, None, None, None, None, None, None, None]
     pods[pod_name][idx] = v
 
 # receives string in format of dd:dd:dd.d+ and gives epoch for that in milliseconds
@@ -107,7 +108,9 @@ def process_containerd_file(file_path):
             if mch:
                 duration = int(float(mch.group('duration')))
                 pod_name = mch.group('pod_name')
+                timestamp = timestamp2epoch(mch.group('timestamp'))
                 put_record(pod_name, 9, duration)
+                put_record(pod_name, 10, timestamp)
                 continue
 
 process_kubelet_file(KUBELET_FILE)
