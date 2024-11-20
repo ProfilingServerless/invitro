@@ -108,12 +108,6 @@ function setup_master() {
         END {print "sudo kubeadm join " ip ":" port " --token " token " --discovery-token-ca-cert-hash " token_hash}'\'' ~/vhive/scripts/masterKey.yaml')
 }
 
-function post_setup_master() {
-    echo "Post setup master node: $MASTER_NODE" 
-
-    # Setup zipkin
-    server_exec $MASTER_NODE "~/vhive/scripts/setup_tool setup_zipkin; sleep 5"
-}
 
 function setup_vhive_firecracker_daemon() {
     node=$1
@@ -154,10 +148,6 @@ function setup_workers() {
         server_exec $node "sudo ${LOGIN_TOKEN} > /dev/null 2>&1"
         echo "Worker node $node joined the cluster (again :P)."
 
-        # Increase Kubelet loglevel
-        server_exec $node "sudo sed -i 's/--v=[0-9]\+/--v=4/' /etc/default/kubelet"
-        server_exec $node "sudo systemctl daemon-reload"
-        server_exec $node "sudo systemctl restart kubelet"
     }
 
     for node in "$@"
@@ -295,6 +285,4 @@ function distribute_loader_ssh_key() {
     if [[ "$DEPLOY_PROMETHEUS" == true ]]; then
         $DIR/expose_infra_metrics.sh $MASTER_NODE
     fi
-
-    post_setup_master
 }
