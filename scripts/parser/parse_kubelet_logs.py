@@ -17,7 +17,6 @@ creating_container_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Creating 
 created_container_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Created container in pod.* pod="default/(?P<pod_name>[^"]+)"'
 network_sandbox_pattern = r'Network sandbox created in (?P<duration>\d+\.\d+)ms.*(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+).*podsandboxname=(?P<pod_name>[^_]+)'
  
-Network sandbox created in 334.469836ms. from 2024-11-19 10:22:20.42684018
 
 POD_SCHEM =  ['first_seen_timestamp',
               'creating_sandbox_timestamp',
