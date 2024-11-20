@@ -9,6 +9,13 @@ server_exec() {
 LOADER="node-001.startup-exp.simbricks-pg0.wisc.cloudlab.us"
 WORKER="node-002.startup-exp.simbricks-pg0.wisc.cloudlab.us"
 
+
+echo "Cleaning up previous results"
+rm -rf ~/results
+for exp in "${EXPS[@]}"; do
+    mkdir -p ~/results/$exp
+done
+
 for exp in "${EXPS[@]}"; do
     echo "Starting $exp"
 
@@ -16,7 +23,7 @@ for exp in "${EXPS[@]}"; do
     server_exec $WORKER "tmux kill-session -t util"
     server_exec $WORKER "tmux kill-session -t ctr"
 
-    cp ~/traces/$exp ~/loader/data/traces/example/invocations.csv
+    cp ~/loader/data/traces/experiments/$exp ~/loader/data/traces/example/invocations.csv
     
     server_exec $WORKER "tmux new-session -d -s 'kubelet' 'sleep 200; ~/loader/scripts/recorder/kubelet.sh'"
     server_exec $WORKER "tmux new-session -d -s 'util' '~/loader/scripts/recorder/worker-utilization.sh'"
@@ -41,3 +48,6 @@ for exp in "${EXPS[@]}"; do
     sleep 60
     echo "Experiment $exp ended"
 done
+
+echo "Coperssed at ~/m1_5_x.zip"
+zip -r ~/m1_5_x.zip ~/results/
