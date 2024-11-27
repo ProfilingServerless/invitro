@@ -12,10 +12,8 @@ echo "Setup containerd"
 cd ~
 wget https://github.com/ProfilingServerless/containerd/releases/download/v1.6.36/containerd_x86_1.6_logged
 chmod +x ~/containerd_x86_1.6_logged
-tmux send-keys -t containerd:0 'C-c'
+tmux kill-session -t containerd
 sudo cp ~/containerd_x86_1.6_logged /usr/local/bin/containerd 
 sudo mkdir -p /etc/containerd
 sudo cp ~/loader/config/containerd.toml /etc/containerd/config.toml
 tmux send -t containerd "sudo containerd 2>&1 | tee ~/containerd_log.txt" ENTER
-
-
