@@ -1,15 +1,18 @@
 #!/usr/bin/bash
 
-echo "Increase kubelet log level"
+echo "Setup kubelet"
+sudo systemctl stop kubelet
 sudo sed -i 's/--v=[0-9]\+/--v=4/' /etc/default/kubelet
+wget https://github.com/ProfilingServerless/kubernetes/releases/download/v1.29.10/kubelet_x86_1.29.10_logged -O ~/kubelet_x86_1.29.10_logged
+chmod +x kubelet_x86_1.29.10_logged
+sudo cp ~/kubelet_x86_1.29.10_logged /usr/bin/kubelet
 sudo systemctl daemon-reload
 sudo systemctl restart kubelet
 
-echo "Setup zipkin"
-~/vhive/scripts/setup_tool setup_zipkin; sleep 5
+# echo "Setup zipkin"
+# ~/vhive/scripts/setup_tool setup_zipkin; sleep 5
 
 echo "Setup containerd"
-cd ~
 wget https://github.com/ProfilingServerless/containerd/releases/download/v1.6.36/containerd_x86_1.6_logged
 chmod +x ~/containerd_x86_1.6_logged
 tmux kill-session -t containerd
