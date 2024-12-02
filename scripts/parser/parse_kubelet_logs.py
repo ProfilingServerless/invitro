@@ -15,7 +15,7 @@ created_sandbox_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Created PodS
 e2e_duration_pattern = r'Observed pod startup duration.* pod="default/(?P<pod_name>[^"]+)" .* podStartE2EDuration="(?P<e2e_duration>\d+\.\d+)s" .* watchObservedRunningTime=".*(?P<observed_running_time>\d{2}:\d{2}:\d{2}\.\d+).*"'
 creating_container_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Creating container in pod.* pod="default/(?P<pod_name>[^"]+)"'
 created_container_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Created container in pod.* pod="default/(?P<pod_name>[^"]+)"'
-network_sandbox_pattern = r'Network sandbox created in (?P<duration>\d+\.\d+)ms.*(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+).*podsandboxname=(?P<pod_name>[^_]+)'
+network_sandbox_pattern = r'Network sandbox created in (?P<duration>\d+\.\d+).*(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+).*podsandboxname=(?P<pod_name>[^_]+)'
  
 
 POD_SCHEM =  ['first_seen_timestamp',
@@ -103,9 +103,15 @@ def process_kubelet_file(file_path):
 def process_containerd_file(file_path):
     with open(file_path, 'r') as file:
         for line in file:
+            if 'trace-func-49-11106925386021094677-00001-deployment-68d6586p454' in line:
+                print(line)
             mch = re.search(network_sandbox_pattern, line)
             if mch:
-                duration = int(float(mch.group('duration')))
+                tmp = float(mch.group('duration'))
+                if tmp < 10:
+                    duration = int(tmp * 100)
+                else:
+                    duration = int(tmp)
                 pod_name = mch.group('pod_name')
                 timestamp = timestamp2epoch(mch.group('timestamp'))
                 put_record(pod_name, 9, duration)
