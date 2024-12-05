@@ -1,8 +1,10 @@
 #!/usr/bin/bash
 
 # Note.
+# Run it on a single worker
 
 EXPS=("5" "50" "100" "150" "200")
+# EXPS=("150")
 
 server_exec() {
     ssh -oStrictHostKeyChecking=no -p 22 "$1" "$2";
@@ -30,8 +32,9 @@ for exp in "${EXPS[@]}"; do
     tmux new-session -d -s 'ctr' '~/loader/scripts/recorder/containerd.sh'
 
     for i in $(seq 1 $exp); do
-        kubectl apply -f ~/loader/data/traces/experiments/C/trace-func-$i.yaml
+        kubectl apply -f ~/loader/data/traces/experiments/C/trace-func-$i.yaml &
     done
+    wait
 
     sleep 60
     
@@ -43,9 +46,10 @@ for exp in "${EXPS[@]}"; do
     cp ~/pods.csv ~/results/$exp
 
     for i in $(seq 1 $exp); do
-        kubectl delete po trace-func-$i
+        kubectl delete po trace-func-$i & 
     done
-    sleep 60
+    wait
+    sleep 30
 
     echo "Experiment $exp ended"
 done
