@@ -3,7 +3,7 @@
 echo "Setup kubelet"
 sudo systemctl stop kubelet
 sudo sed -i 's/--v=[0-9]\+/--v=4/' /etc/default/kubelet
-wget https://github.com/ProfilingServerless/kubernetes/releases/download/v1.29.10/kubelet_x86_1.29.10_logged -O ~/kubelet_x86_1.29.10_logged
+wget https://github.com/ProfilingServerless/kubernetes/releases/download/v1.28.10/kubelet -O ~/kubelet_x86_1.29.10_logged
 chmod +x kubelet_x86_1.29.10_logged
 sudo cp ~/kubelet_x86_1.29.10_logged /usr/bin/kubelet
 sudo systemctl daemon-reload
