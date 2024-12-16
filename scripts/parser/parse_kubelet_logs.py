@@ -16,6 +16,15 @@ e2e_duration_pattern = r'Observed pod startup duration.* pod="default/(?P<pod_na
 creating_container_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Creating container in pod.* pod="default/(?P<pod_name>[^"]+)"'
 created_container_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Created container in pod.* pod="default/(?P<pod_name>[^"]+)"'
 network_sandbox_pattern = r'Network sandbox created in (?P<duration>\d+\.\d+).*(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+).*podsandboxname=(?P<pod_name>[^_]+)'
+sync_pod_enter_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*SyncPod enter.* pod="default/(?P<pod_name>[^"]+)"'
+pod_cgroup_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Pod cgroup created.* pod="default/(?P<pod_name>[^"]+)".* duration="(?P<duration>\d+\.\d+).*"'
+process_pod_event_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Processing pod event.* pod="default/(?P<pod_name>[^"]+)"'
+first_sync_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Pod is being synced for the first time.* pod="default/(?P<pod_name>[^"]+)"'
+sync_loop_add_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*SyncLoop ADD.*'
+pod_worker_start_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Pod wokrer has started.* pod="default/(?P<pod_name>[^"]+)"'
+
+pod_pattern = r'"default/(?P<pod_name>[^"]+)"'
+
  
 
 POD_SCHEM =  ['first_seen_timestamp',
@@ -28,13 +37,21 @@ POD_SCHEM =  ['first_seen_timestamp',
               'created_workload_timestamp',
               'creating_workload_timestamp',
               'network_sandbox_duration',
-              'network_sandbox_timestamp']
+              'network_sandbox_timestamp',
+              'sync_pod_enter_timestamp',
+              'pod_cgroup_duration',
+              'pod_cgroup_end_timestamp',
+              'process_pod_event_timestamp',
+              'first_sync_timestamp',
+              'sync_loop_add_timestamp',
+              'pod_worker_start_timestamp']
 
 
 def put_record(pod_name, idx, v):
     if not pod_name in pods:
-        pods[pod_name] = [None, None, None, None, None, None, None, None, None, None, None]
-    pods[pod_name][idx] = v
+        pods[pod_name] = [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+    if not pods[pod_name][idx] or v < pods[pod_name][idx]:
+        pods[pod_name][idx] = v
 
 # receives string in format of dd:dd:dd.d+ and gives epoch for that in milliseconds
 def timestamp2epoch(timestamp):
@@ -98,20 +115,76 @@ def process_kubelet_file(file_path):
                 else:
                     put_record(pod_name, 8, timestamp)
                 continue
+            
+            mch = re.search(sync_pod_enter_pattern, line)
+            if mch:
+                timestamp = timestamp2epoch(mch.group('timestamp'))
+                pod_name = mch.group('pod_name')
+                put_record(pod_name, 11, timestamp)
+                continue
+
+            mch = re.search(pod_cgroup_pattern, line)
+            if mch:
+                timestamp = timestamp2epoch(mch.group('timestamp'))
+                pod_name = mch.group('pod_name')
+                duration = float(mch.group('duration'))
+                
+                if f"{duration}s" in line:
+                    duration = int(duration * 1000)
+                elif f"{duration}ms" in line:
+                    duration = int(duration)
+                elif f"{duration}µs" in line:
+                    duration = round(duration * 0.001, 3)
+
+                put_record(pod_name, 12, duration)
+                put_record(pod_name, 13, timestamp)
+                continue
+
+            mch = re.search(process_pod_event_pattern, line) 
+            if mch:
+                timestamp = timestamp2epoch(mch.group('timestamp'))
+                pod_name = mch.group('pod_name')
+                put_record(pod_name, 14, timestamp)
+                continue
+
+            mch = re.search(first_sync_pattern, line)
+            if mch:
+                timestamp = timestamp2epoch(mch.group('timestamp'))
+                pod_name = mch.group('pod_name')
+                put_record(pod_name, 15, timestamp)
+                continue
+
+            mch = re.search(sync_loop_add_pattern, line)
+            if mch:
+                timestamp = timestamp2epoch(mch.group('timestamp'))
+                pods = re.findall(pod_pattern, line)
+                for p in pods:
+                    put_record(p, 16, timestamp)
+                continue
+
+            mch = re.search(pod_worker_start_pattern, line)
+            if mch:
+                timestamp = timestamp2epoch(mch.group('timestamp'))
+                pod_name = mch.group('pod_name')
+                put_record(pod_name, 17, timestamp)
+                continue
+
 
 
 def process_containerd_file(file_path):
     with open(file_path, 'r') as file:
         for line in file:
-            if 'trace-func-49-11106925386021094677-00001-deployment-68d6586p454' in line:
-                print(line)
             mch = re.search(network_sandbox_pattern, line)
             if mch:
-                tmp = float(mch.group('duration'))
-                if tmp < 10:
-                    duration = int(tmp * 100)
-                else:
-                    duration = int(tmp)
+                duration = float(mch.group('duration'))
+
+                if f"{duration}s" in line:
+                    duration = int(duration * 1000)
+                elif f"{duration}ms" in line:
+                    duration = int(duration)
+                elif f"{duration}µs" in line:
+                    duration = round(duration * 0.001, 3)
+
                 pod_name = mch.group('pod_name')
                 timestamp = timestamp2epoch(mch.group('timestamp'))
                 put_record(pod_name, 9, duration)
