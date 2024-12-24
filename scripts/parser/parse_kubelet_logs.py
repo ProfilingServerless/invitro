@@ -22,6 +22,7 @@ process_pod_event_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Processing
 first_sync_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Pod is being synced for the first time.* pod="default/(?P<pod_name>[^"]+)"'
 sync_loop_add_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*SyncLoop ADD.*'
 pod_worker_start_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Pod wokrer has started.* pod="default/(?P<pod_name>[^"]+)"'
+pod_volume_pattern = r'(?P<timestamp>\d{2}:\d{2}:\d{2}\.\d+) .*Pod volumes attached and mounted.* pod="default/(?P<pod_name>[^"]+)".* duration="(?P<duration>\d+\.\d+).*"'
 
 pod_pattern = r'"default/(?P<pod_name>[^"]+)"'
 
@@ -44,14 +45,20 @@ POD_SCHEM =  ['first_seen_timestamp',
               'process_pod_event_timestamp',
               'first_sync_timestamp',
               'sync_loop_add_timestamp',
-              'pod_worker_start_timestamp']
+              'pod_worker_start_timestamp',
+              'pod_volume_duration',
+              'pod_volume_end_timestamp']
 
 
 def put_record(pod_name, idx, v):
     if not pod_name in pods:
-        pods[pod_name] = [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
-    if not pods[pod_name][idx] or v < pods[pod_name][idx]:
-        pods[pod_name][idx] = v
+        pods[pod_name] = [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+    if idx == POD_SCHEM.index('pod_cgroup_duration')  or idx == POD_SCHEM.index('pod_volume_duration'):
+        if not pods[pod_name][idx] or float(v) > float(pods[pod_name][idx]):
+            pods[pod_name][idx] = v
+    else:
+        if not pods[pod_name][idx] or float(v) < float(pods[pod_name][idx]):
+            pods[pod_name][idx] = v
 
 # receives string in format of dd:dd:dd.d+ and gives epoch for that in milliseconds
 def timestamp2epoch(timestamp):
@@ -168,6 +175,22 @@ def process_kubelet_file(file_path):
                 pod_name = mch.group('pod_name')
                 put_record(pod_name, 17, timestamp)
                 continue
+
+            mch = re.search(pod_volume_pattern, line)
+            if mch:
+                timestamp = timestamp2epoch(mch.group('timestamp'))
+                pod_name = mch.group('pod_name')
+                duration = float(mch.group('duration'))
+                
+                if f"{duration}s" in line:
+                    duration = int(duration * 1000)
+                elif f"{duration}ms" in line:
+                    duration = int(duration)
+                elif f"{duration}µs" in line:
+                    duration = round(duration * 0.001, 3)
+                put_record(pod_name, 18, duration)
+                put_record(pod_name, 19, timestamp)
+
 
 
 
