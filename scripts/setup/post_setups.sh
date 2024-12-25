@@ -19,4 +19,5 @@ tmux kill-session -t containerd
 sudo cp ~/containerd_x86_1.6_logged /usr/local/bin/containerd 
 sudo mkdir -p /etc/containerd
 sudo cp ~/loader/config/containerd.toml /etc/containerd/config.toml
+tmux new -s containerd
 tmux send -t containerd "sudo containerd 2>&1 | tee ~/containerd_log.txt" ENTER
