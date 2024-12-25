@@ -30,7 +30,8 @@ for exp in "${EXPS[@]}"; do
     tmux new-session -d -s 'kubelet' '~/loader/scripts/recorder/kubelet.sh'
     tmux new-session -d -s 'util' '~/loader/scripts/recorder/worker-utilization.sh'
     tmux new-session -d -s 'ctr' '~/loader/scripts/recorder/containerd.sh'
-
+    
+    echo "$(date -u +"%Y-%m-%d %H:%M:%S")" >> ~/results/$exp/timestamp
     for i in $(seq 1 $exp); do
         kubectl apply -f ~/loader/data/traces/experiments/C/trace-func-$i.yaml &
     done
@@ -44,6 +45,7 @@ for exp in "${EXPS[@]}"; do
 
     python3 ~/loader/scripts/parser/parse_kubelet_logs.py
     cp ~/pods.csv ~/results/$exp
+    echo "$(date -u +"%Y-%m-%d %H:%M:%S")" >> ~/results/$exp/timestamp
 
     for i in $(seq 1 $exp); do
         kubectl delete po trace-func-$i & 
