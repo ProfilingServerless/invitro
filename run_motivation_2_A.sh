@@ -8,8 +8,8 @@ server_exec() {
     ssh -oStrictHostKeyChecking=no -p 22 "$1" "$2";
 }
 
-LOADER="node-001.startup-exp.simbricks-pg0.wisc.cloudlab.us"
-WORKER="node-002.startup-exp.simbricks-pg0.wisc.cloudlab.us"
+LOADER="node-001.cpdp-exp.simbricks-pg0.wisc.cloudlab.us"
+WORKER="node-002.cpdb-exp.simbricks-pg0.wisc.cloudlab.us"
 
 
 echo "Cleaning up previous results"
@@ -32,9 +32,9 @@ for exp in "${EXPS[@]}"; do
     server_exec $WORKER "tmux new-session -d -s 'util' '~/loader/scripts/recorder/worker-utilization.sh'"
     server_exec $WORKER "tmux new-session -d -s 'ctr' '~/loader/scripts/recorder/containerd.sh'"
 
-    go run cmd/loader.go --config=cmd/config_knative_trace.json
+    go run cmd/loader.go --config=cmd/config_motivation_2_A.json
 
-    sleep 60
+    sleep 10
     
     ./scripts/recorder/post_metrics.sh > ~/results/$exp/stats.txt
 
